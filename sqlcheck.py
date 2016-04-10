@@ -17,59 +17,59 @@ class sqlcheck():
 		self.sqlmap='http://127.0.0.1:8775'
 		self.taskid=''
 
-
-
-	def newtask(self):
-		res=urllib.urlopen(self.sqlmap+'/task/new').read()
-		res=json.loads(res)
-		self.taskid=res['taskid']
-		return self.taskid
-
 	#发送到sqlmap检查
 
 	def sqlchecks(self,data):
 		data=json.dumps(data)
-		url=self.sqlmap+"/scan/"+self.taskid+"/start"
-		req=urllib2.Request(url,data=data,headers={'Content-Type':'application/json'})
-		res=urllib2.urlopen(req).read()
-		res=json.loads(res)
-		time.sleep(30)
-		self.sqlstat(self.taskid)
+		try:
+			url=self.sqlmap+"/scan/"+self.taskid+"/start"
+			req=urllib2.Request(url,data=data,headers={'Content-Type':'application/json'})
+			res=urllib2.urlopen(req).read()
+			res=json.loads(res)
+			time.sleep(30)
+			self.sqlstat()
+		except urllib2.URLError, e:
+			print e.reason
+				
+		
 
 
-	def sqlstat(self,taskid):
-		url=self.sqlmap+"/scan/"+self.taskid+"/status"
-		res=urllib2.urlopen(url).read()
-		res=json.loads(res)
+	def sqlstat(self):
+		res=self.sendsqlmap("status")
 		if res['status']=="terminated":
-			url=self.sqlmap+"/scan/"+self.taskid+"/data"
-			datares=urllib2.urlopen(url).read()
-			print type(datares)
-			print datares
-			return
+			datares=self.sendsqlmap("data")
+			if datares['data']== None:
+				 return False
+			print datares['data']
+			#注入 入库
 		else:
 			time.sleep(30)
-			self.sqlstat(self.taskid)
+			self.sqlstat()
 
 
 	def checksql(self,args):
-		if self.args=="task/new":
-			self.taskid=self.sendsqlmap("task/new")
-		elif self.args=="status"::
-			res=self.sendsqlmap("status")
+		if args=="task/new":
+			res=self.sendsqlmap("task/new")
+			self.taskid=res['taskid']
+		elif args=="status":
+			self.sendsqlmap("status")
+		elif args=="data":
+			self.sendsqlmap("data")
 
-	
+	def sendsqlmap(self,ags):
+		try:
+			url=self.sqlmap+"/scan/"+self.taskid+"/"+ags
+			res=urllib2.urlopen(url).read()
+			res=json.loads(res)
+			return res
+		except urllib2.URLError, e:
+			print e.reason
+		
 
-	def sendsqlmap(self,args):
-		url=self.sqlmap+"/scan/"+self.taskid+"/"+slef.args
-		res=urllib2.urlopen(url).read()
-		res=json.loads(res)
-		return res
 
 
 
-
-data={'url':'http://xgb.hnist.cn/index.php?m=About&a=index&id=2'}
+data={'url':'http://www.modsecurity.org/testphp.vulnweb.com/artists.php?artist=1'}
 s=sqlcheck()
-taskid=s.newtask()
+s.sendsqlmap('task/new')
 s.sqlchecks(data)
