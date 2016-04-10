@@ -58,7 +58,10 @@ class sqlcheck():
 
 	def sendsqlmap(self,ags):
 		try:
-			url=self.sqlmap+"/scan/"+self.taskid+"/"+ags
+			if self.taskid =='':
+				url=self.sqlmap+"/"+ags
+			elif self.taskid != '':
+				url=self.sqlmap+"/scan/"+self.taskid+"/"+ags
 			res=urllib2.urlopen(url).read()
 			res=json.loads(res)
 			return res
@@ -71,5 +74,5 @@ class sqlcheck():
 
 data={'url':'http://www.modsecurity.org/testphp.vulnweb.com/artists.php?artist=1'}
 s=sqlcheck()
-s.sendsqlmap('task/new')
+s.checksql('task/new')
 s.sqlchecks(data)
