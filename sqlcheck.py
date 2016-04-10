@@ -6,28 +6,36 @@ import os
 import urllib
 import urllib2
 import time
-
+import threading
 
 
 		
 
-class sqlcheck():		
+class sqlcheck(threading.Thread):		
 	#新建任务
-	def __init__(self):
+	def __init__(self,data):
 		self.sqlmap='http://127.0.0.1:8775'
 		self.taskid=''
+		self.data=data
+		self.checksql('task/new')
+		self.sqlchecks()
 
+	def run():
+		for i in range(1,1000):
+			self.data.put(i)
 	#发送到sqlmap检查
 
-	def sqlchecks(self,data):
-		data=json.dumps(data)
+	def sqlchecks(self):
+		data=json.dumps(self.data)
 		try:
 			url=self.sqlmap+"/scan/"+self.taskid+"/start"
 			req=urllib2.Request(url,data=data,headers={'Content-Type':'application/json'})
 			res=urllib2.urlopen(req).read()
 			res=json.loads(res)
-			time.sleep(30)
-			self.sqlstat()
+			if res['success']==True:
+				time.sleep(60)
+				self.sqlstat()
+			return False
 		except urllib2.URLError, e:
 			print e.reason
 				
@@ -70,9 +78,3 @@ class sqlcheck():
 		
 
 
-
-
-data={'url':'http://www.modsecurity.org/testphp.vulnweb.com/artists.php?artist=1'}
-s=sqlcheck()
-s.checksql('task/new')
-s.sqlchecks(data)
